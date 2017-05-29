@@ -9,6 +9,27 @@ class Collection implements \IteratorAggregate
     private $vars = [];
     private $fn_cnt = 0;
 
+    public static function from($iterable)
+    {
+        return new static($iterable);
+    }
+
+    public static function range($start, $end, $step = 1)
+    {
+        return new static(self::xrange($start, $end, $step));
+    }
+
+    private static function xrange($start, $end, $step = 1)
+    {
+        $_i = $start;
+        while ($_i <= $end) {
+            yield $_i;
+            for ($j = $step; $j > 0; --$j) {
+                ++$_i;
+            }
+        }
+    }
+
     public function __construct($seed)
     {
         if (!is_array($seed) && !is_object($seed)) {
@@ -88,7 +109,7 @@ class Collection implements \IteratorAggregate
         $this->vars['_carry'] = $initial;;
         $ops[] = '$_carry = ' . $fn . ';';
         $after = '$_result = $_carry;';
-        return self::evaluate($this->seed, $this->compile($ops), '', $after);
+        return self::evaluate($this->seed, $this->vars, $this->compile($ops), '', $after);
     }
 
     public function flip()
@@ -104,7 +125,7 @@ class Collection implements \IteratorAggregate
         $before = '$_result = 0;';
         $ops[] = '$_result += $_;';
 
-        return self::evaluate($this->seed, $this->compile($ops), $before, '');
+        return self::evaluate($this->seed, $this->vars, $this->compile($ops), $before, '');
     }
 
     public function product()
@@ -113,7 +134,7 @@ class Collection implements \IteratorAggregate
         $before = '$_result = 1;';
         $ops[] = '$_result *= $_;';
 
-        return self::evaluate($this->seed, $this->compile($ops), $before, '');
+        return self::evaluate($this->seed, $this->vars, $this->compile($ops), $before, '');
     }
 
     public function usort(callable $fn)
@@ -149,6 +170,7 @@ class Collection implements \IteratorAggregate
         $ops[] = 'yield $_key => $_;';
         $gen = self::evaluate(
             $this->_seed,
+            $this->vars,
             $this->compile($ops),
             '$_result = static function() use($_seed){',
             '};'
@@ -165,6 +187,7 @@ class Collection implements \IteratorAggregate
         $ops[] = '$_result[$_key] = $_;';
         return self::evaluate(
             $this->seed,
+            $this->vars,
             $this->compile($ops),
             '$_result = [];',
             ''
@@ -181,13 +204,13 @@ class Collection implements \IteratorAggregate
         $this->is_array = true;
         $this->ops = [];
         $this->vars = [];
-        $this->fnCnt = 0;
+        $this->fn_cnt = 0;
     }
 
-    private static function evaluate($_seed, $_code, $_before, $_after)
+    private static function evaluate($_seed, $_vars, $_code, $_before, $_after)
     {
         $_result = null;
-        extract($this->vars);
+        extract($_vars);
         eval("$_before \n $_code \n $_after");
         return $_result;
     }

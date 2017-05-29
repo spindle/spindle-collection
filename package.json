@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "start": "gulp server"
+  },
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-connect": "*"
+  }
+}
