@@ -9,7 +9,9 @@
             "email": "hiraku@tojiru.net"
         }
     ],
-    "require": {},
+    "autoload": {
+        "file": ["src/Collection.php"]
+    },
     "require-dev": {
         "phpunit/phpunit": "^6.1"
     }
