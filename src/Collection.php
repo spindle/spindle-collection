@@ -85,10 +85,10 @@ class Collection implements \IteratorAggregate
     public function reduce($fn, $initial = null)
     {
         $ops = $this->ops;
-        $before = '$_carry = ' . var_export($initial) . ';';
+        $this->vars['_carry'] = $initial;;
         $ops[] = '$_carry = ' . $fn . ';';
         $after = '$_result = $_carry;';
-        return self::evaluate($this->seed, $this->compile($ops), $before, $after);
+        return self::evaluate($this->seed, $this->compile($ops), '', $after);
     }
 
     public function flip()
@@ -187,6 +187,7 @@ class Collection implements \IteratorAggregate
     private static function evaluate($_seed, $_code, $_before, $_after)
     {
         $_result = null;
+        extract($this->vars);
         eval("$_before \n $_code \n $_after");
         return $_result;
     }
