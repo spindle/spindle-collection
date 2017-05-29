@@ -1,0 +1,16 @@
+{
+    "name": "spindle/collection",
+    "description": "The fastest collection(array_map, array_reduce, ..) wrapper",
+    "type": "library",
+    "license": "CC0-1.0",
+    "authors": [
+        {
+            "name": "Hiraku NAKANO",
+            "email": "hiraku@tojiru.net"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^6.1"
+    }
+}
