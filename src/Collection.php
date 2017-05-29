@@ -50,7 +50,7 @@ class Collection implements \IteratorAggregate
         $columns = [];
         foreach ($columns as $key) {
             $exported = var_export($key);
-            $columns = "$exported => \$_[$exported]"
+            $columns = "$exported => \$_[$exported]";
         }
         $this->ops[] = '$_ = [' . implode(',', $columns) . '];';
         return $this;
@@ -59,10 +59,8 @@ class Collection implements \IteratorAggregate
     public function slice($offset, $length = null)
     {
         if ($offset < 0) {
-            $array = $this->toArray();
             $this->seed = array_slice($this->toArray(), $offset, $length);
-            $this->is_array = true;
-            $this->ops = [];
+            $this->clear();
             return $this;
         }
         $this->ops[] = 'if ($_i < ' . $offset . ') continue;';
@@ -72,18 +70,15 @@ class Collection implements \IteratorAggregate
 
     public function chunk($size)
     {
-        $array = $this->toArray();
         $this->seed = array_chunk($this->toArray(), $size);
-        $this->is_array = true;
-        $this->ops = [];
+        $this->clear();
         return $this;
     }
 
     public function unique()
     {
-        $this->is_array = true;
         $this->seed = array_unique($this->toArray());
-        $this->ops = [];
+        $this->clear();
         return $this;
     }
 
@@ -126,8 +121,7 @@ class Collection implements \IteratorAggregate
         $array = $this->toArray();
         usort($array, $fn);
         $this->seed = $array;
-        $this->is_array = true;
-        $this->ops = [];
+        $this->clear();
         return $this;
     }
 
