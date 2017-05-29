@@ -106,7 +106,7 @@ class Collection implements \IteratorAggregate
     public function reduce($fn, $initial = null)
     {
         $ops = $this->ops;
-        $this->vars['_carry'] = $initial;;
+        $this->vars['_carry'] = $initial;
         $ops[] = '$_carry = ' . $fn . ';';
         $after = '$_result = $_carry;';
         return self::evaluate($this->seed, $this->vars, $this->compile($ops), '', $after);
