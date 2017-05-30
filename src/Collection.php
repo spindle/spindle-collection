@@ -68,12 +68,12 @@ class Collection implements \IteratorAggregate
     public function column(array $columns)
     {
         $this->is_array = false;
-        $columns = [];
+        $defs = [];
         foreach ($columns as $key) {
-            $exported = var_export($key);
-            $columns = "$exported => \$_[$exported]";
+            $exported = var_export($key, 1);
+            $defs[] = "$exported => \$_[$exported]";
         }
-        $this->ops[] = '$_ = [' . implode(',', $columns) . '];';
+        $this->ops[] = '$_ = [' . implode(',', $defs) . '];';
         return $this;
     }
 

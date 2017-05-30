@@ -42,4 +42,10 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
         $_ = Collection::from([1,1,1,1,1]);
         self::assertEquals([1], $_->unique()->toArray());
     }
+
+    public function testColumn()
+    {
+        $_ = Collection::from(array_fill(0, 4, [1,2,3]));
+        self::assertEquals([[1],[1],[1],[1]], $_->column([0])->toArray());
+    }
 }
