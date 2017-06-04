@@ -265,7 +265,7 @@ class Collection implements \IteratorAggregate
     /**
      * @return $this
      */
-    public function assignTo(&$var)
+    public function assignTo(&$var = null)
     {
         $var = $this;
         return $this;
@@ -274,7 +274,7 @@ class Collection implements \IteratorAggregate
     /**
      * @return $this
      */
-    public function assignArrayTo(&$var)
+    public function assignArrayTo(&$var = null)
     {
         $var = $this->toArray();
         return $this;

@@ -38,8 +38,8 @@ _::range(1,4)->map('$_ * 2')->dump();
 
 ### filter($fn)
 
-`$fn($_) == true` ==> remained
-`$fn($_) == false` ==> filtered
+- `$fn($_) == true` ==> remain
+- `$fn($_) == false` ==> remove
 
 ```php
 _::range(1,4)->filter('$_ % 2')->dump();
@@ -99,8 +99,16 @@ _::from(['a' => 1, 'b' => 2, 'c' => 3])->flip()->dump();
 
 export to variable
 
+```php
+$val = _::from([1,2,3])->map('$_ * 2');
+// equals
+_::from([1,2,3])->map('$_ * 2')->assignTo($val);
+```
+
 ### dump()
 
 ```php
-var_dump($this->toArray());
+$_->dump();
+// equals
+var_dump($_->toArray());
 ```
