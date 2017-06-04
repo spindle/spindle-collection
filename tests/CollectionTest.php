@@ -3,6 +3,14 @@ namespace Spindle;
 
 class CollectionTest extends \PHPUnit\Framework\TestCase
 {
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testConstructCheck()
+    {
+        new Collection(123);
+    }
+
     public function testRange()
     {
         self::assertEquals([1,2,3,4,5,6,7,8,9,10], Collection::range(1, 10)->toArray());
@@ -32,7 +40,6 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
     {
         $_ = Collection::range(1, 10);
         self::assertEquals(1 + 3 + 5 + 7 + 9, $_->filter('$_ % 2')->sum());
-
         $_ = Collection::range(1, 10);
         self::assertEquals(1 + 3 + 5 + 7 + 9, $_->filter(function ($_) { return $_ % 2; })->sum());
     }

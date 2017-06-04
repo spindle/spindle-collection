@@ -5,15 +5,25 @@ class Collection implements \IteratorAggregate
 {
     private $ops = [];
     private $seed;
-    private $isArray;
+    private $is_array;
     private $vars = [];
     private $fn_cnt = 0;
 
+    /**
+     * @return \Spindle\Collection
+     */
     public static function from($iterable)
     {
         return new static($iterable);
     }
 
+    /**
+     * Generator-based range()
+     * @param int|string $start
+     * @param int|string $end
+     * @param int $step
+     * @return \Spindle\Collection
+     */
     public static function range($start, $end, $step = 1)
     {
         return new static(self::xrange($start, $end, $step));
@@ -30,79 +40,120 @@ class Collection implements \IteratorAggregate
         }
     }
 
+    /**
+     * @param iterable $seed
+     */
     public function __construct($seed)
     {
         if (!is_array($seed) && !is_object($seed)) {
-            throw new \InvalidArgumentException('$seed should be traversable');
+            throw new \InvalidArgumentException('$seed should be iterable, given ' . gettype($seed));
         }
         $this->is_array = is_array($seed);
         $this->seed = $seed;
     }
 
+    /**
+     * @param string|callable $fn '$_ > 100'
+     * @return \Spindle\Collection (new instance)
+     */
     public function filter($fn)
     {
-        $this->is_array = false;
+        $new = clone $this;
+        $new->is_array = false;
         if (is_callable($fn)) {
-            $fn_name = '_fn' . $this->fn_cnt++;
-            $this->vars[$fn_name] = $fn;
-            $this->ops[] = 'if (!$' . $fn_name . '($_)) continue;';
+            $fn_name = '_fn' . $new->fn_cnt++;
+            $new->vars[$fn_name] = $fn;
+            $new->ops[] = 'if (!$' . $fn_name . '($_)) continue;';
         } else {
-            $this->ops[] = 'if (!(' . $fn . ')) continue;';
+            $new->ops[] = 'if (!(' . $fn . ')) continue;';
         }
-        return $this;
+        return $new;
     }
 
+    /**
+     * @param string|callable $fn '$_ * 2'
+     * @return \Spindle\Collection (new instance)
+     */
     public function map($fn)
     {
-        $this->is_array = false;
+        $new = clone $this;
+        $new->is_array = false;
         if (is_callable($fn)) {
-            $fn_name = '_fn' . $this->fn_cnt++;
-            $this->vars[$fn_name] = $fn;
-            $this->ops[] = '$_ = $' . $fn_name . '($_);';
+            $fn_name = '_fn' . $new->fn_cnt++;
+            $new->vars[$fn_name] = $fn;
+            $new->ops[] = '$_ = $' . $fn_name . '($_);';
         } else {
-            $this->ops[] = '$_ = ' . $fn . ';';
+            $new->ops[] = '$_ = ' . $fn . ';';
         }
-        return $this;
+        return $new;
     }
 
+    /**
+     * @param string[] column
+     * @return \Spindle\Collection (new instance)
+     */
     public function column(array $columns)
     {
-        $this->is_array = false;
+        $new = clone $this;
+        $new->is_array = false;
         $defs = [];
         foreach ($columns as $key) {
             $exported = var_export($key, 1);
             $defs[] = "$exported => \$_[$exported]";
         }
-        $this->ops[] = '$_ = [' . implode(',', $defs) . '];';
-        return $this;
+        $new->ops[] = '$_ = [' . implode(',', $defs) . '];';
+        return $new;
     }
 
+    /**
+     * @param int $offset
+     * @param ?int $length
+     * @return \Spindle\Collection (new instance)
+     */
     public function slice($offset, $length = null)
     {
         if ($offset < 0) {
-            $this->seed = array_slice($this->toArray(), $offset, $length);
-            $this->clear();
-            return $this;
+            return new $this(array_slice($this->toArray(), $offset, $length));
         }
-        $this->ops[] = 'if ($_i < ' . $offset . ') continue;';
-        $this->ops[] = 'if ($_i > ' . $offset + $length . ') break;';
-        return $this;
+        $new = clone $this;
+        $new->ops[] = 'if ($_i < ' . $offset . ') continue;';
+        $new->ops[] = 'if ($_i > ' . $offset + $length . ') break;';
+        return $new;
     }
 
+    /**
+     * @param int $size
+     * @return \Spindle\Collection (new instance)
+     */
     public function chunk($size)
     {
-        $this->seed = array_chunk($this->toArray(), $size);
-        $this->clear();
-        return $this;
+        return new $this(array_chunk($this->toArray(), $size));
     }
 
+    /**
+     * @return \Spindle\Collection (new instance)
+     */
     public function unique()
     {
-        $this->seed = array_unique($this->toArray());
-        $this->clear();
-        return $this;
+        return new $this(array_unique($this->toArray()));
     }
 
+    /**
+     * @return \Spindle\Collection (new instance)
+     */
+    public function flip()
+    {
+        $new = clone $this;
+        $new->is_array = false;
+        $new->ops[] = 'list($_key, $_) = array($_, $_key);';
+        return $new;
+    }
+
+    /**
+     * @param string|callable $fn '$_carry + $_'
+     * @param mixed $initial
+     * @return \Spindle\Collection (new instance)
+     */
     public function reduce($fn, $initial = null)
     {
         $ops = $this->ops;
@@ -112,13 +163,9 @@ class Collection implements \IteratorAggregate
         return self::evaluate($this->seed, $this->vars, $this->compile($ops), '', $after);
     }
 
-    public function flip()
-    {
-        $this->is_array = false;
-        $this->ops[] = 'list($_key, $_) = array($_, $_key);';
-        return $this;
-    }
-
+    /**
+     * @return int|float
+     */
     public function sum()
     {
         $ops = $this->ops;
@@ -128,6 +175,9 @@ class Collection implements \IteratorAggregate
         return self::evaluate($this->seed, $this->vars, $this->compile($ops), $before, '');
     }
 
+    /**
+     * @return int|float
+     */
     public function product()
     {
         $ops = $this->ops;
@@ -137,33 +187,39 @@ class Collection implements \IteratorAggregate
         return self::evaluate($this->seed, $this->vars, $this->compile($ops), $before, '');
     }
 
-    public function usort(callable $fn)
+    /**
+     * @return \Spindle\Collection (new instance)
+     */
+    public function usort(callable $cmp)
     {
         $array = $this->toArray();
-        usort($array, $fn);
-        $this->seed = $array;
-        $this->clear();
-        return $this;
+        usort($array, $cmp);
+        return new $this($array);
     }
 
+    /**
+     * @return \Spindle\Collection (new instance)
+     */
     public function rsort($sort_flags = \SORT_REGULAR)
     {
         $array = $this->toArray();
         rsort($array, $sort_flags);
-        $this->seed = $array;
-        $this->clear();
-        return $this;
+        return new $this($array);
     }
 
+    /**
+     * @return \Spindle\Collection (new instance)
+     */
     public function sort($sort_flags = \SORT_REGULAR)
     {
         $array = $this->toArray();
         sort($array, $sort_flags);
-        $this->seed = $array;
-        $this->clear();
-        return $this;
+        return new $this($array);
     }
 
+    /**
+     * @return \Generator
+     */
     public function getIterator()
     {
         $ops = $this->ops;
@@ -178,6 +234,9 @@ class Collection implements \IteratorAggregate
         return $gen();
     }
 
+    /**
+     * @return array
+     */
     public function toArray()
     {
         if ($this->is_array) {
@@ -194,17 +253,61 @@ class Collection implements \IteratorAggregate
         );
     }
 
+    /**
+     * @return $this
+     */
+    public function dump()
+    {
+        var_dump($this->toArray());
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function assignTo(&$var)
+    {
+        $var = $this;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function assignArrayTo(&$var)
+    {
+        $var = $this->toArray();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return $this->compile($this->ops);
     }
 
-    private function clear()
+    /**
+     * @return array
+     */
+    public function __debugInfo()
     {
-        $this->is_array = true;
-        $this->ops = [];
-        $this->vars = [];
-        $this->fn_cnt = 0;
+        if (is_array($this->seed)) {
+            $cnt = count($this->seed);
+            if ($cnt === 0) {
+                $seed = "empty array()";
+            } else {
+                $first = gettype(current($this->seed));
+                $seed = "array($first, ...($cnt items))";
+            }
+        } else {
+            $seed = get_class($this->seed);
+        }
+        return [
+            'seed' => $seed,
+            'code' => $this->compile($this->ops),
+        ];
     }
 
     private static function evaluate($_seed, $_vars, $_code, $_before, $_after)
