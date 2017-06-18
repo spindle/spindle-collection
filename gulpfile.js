@@ -4,7 +4,7 @@
  * 1. install node.js & npm
  * 2. $ npm install
  * 3. $ gulp server
- * 4. open http://localhost:9000/ (livereload enabled)
+ * 4. open http://localhost:9001/ (livereload enabled)
  * 5. coding on src/*.php and tests/*.php
  *
  * enjoy!
@@ -21,9 +21,9 @@ gulp.task('default', ['test', 'inspect']);
 gulp.task('help', function(){
     console.log('gulp test\t... kick vendor/bin/phpunit command');
     console.log('gulp inspect\t... kick vendor/bin/apigen and vendor/bin/pdepend');
-    console.log('gulp server\t... start static web server on http://localhost:9000/');
-    console.log('\tcoverage report... http://localhost:9000/coverage/');
-    console.log('\tApiGen document... http://localhost:9000/api/');
+    console.log('gulp server\t... start static web server on http://localhost:9001/');
+    console.log('\tcoverage report... http://localhost:9001/coverage/');
+    console.log('\tApiGen document... http://localhost:9001/api/');
 });
 
 gulp.task('test', function(done){
@@ -48,7 +48,7 @@ gulp.task('inspect', function(done){
 gulp.task('connect', ['default'], function(){
     connect.server({
         root: [__dirname + '/builds/'],
-        port: 9000,
+        port: 9001,
         livereload: true
     });
 });
