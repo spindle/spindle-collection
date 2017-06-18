@@ -1,6 +1,14 @@
 spindle/collection
 ===================
 
+[![Build Status](https://travis-ci.org/spindle/spindle-collection.svg?branch=master)](https://travis-ci.org/spindle/spindle-collection)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/spindle/spindle-collection/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/spindle/spindle-collection/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/spindle/spindle-collection/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/spindle/spindle-collection/?branch=master)
+[![Latest Stable Version](https://poser.pugx.org/spindle/collection/v/stable.png)](https://packagist.org/packages/spindle/collection)
+[![Total Downloads](https://poser.pugx.org/spindle/collection/downloads.png)](https://packagist.org/packages/spindle/collection)
+[![Latest Unstable Version](https://poser.pugx.org/spindle/collection/v/unstable.png)](https://packagist.org/packages/spindle/collection)
+[![License](https://poser.pugx.org/spindle/collection/license.png)](https://packagist.org/packages/spindle/collection)
+
 The fastest collection library
 
 - construct code and run with `eval()`
