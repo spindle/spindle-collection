@@ -143,8 +143,8 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
 Spindle\Collection
  array-mode:0
  codes:
-  \$_ = \$_ * 2;
-  if (!(\$_ > 5)) continue;
+      \$_ = \$_ * 2;
+      if (!(\$_ > 5)) continue;
 _EXPECT_;
         self::assertEquals($expect, (string)$_);
     }
