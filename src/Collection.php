@@ -3,6 +3,11 @@ namespace Spindle;
 
 class Collection implements \IteratorAggregate
 {
+    const TYPE_FOR = 'for';
+    const TYPE_FOREACH = 'foreach';
+
+    private $type = self::TYPE_FOREACH;
+
     private $ops = [];
     private $seed;
     private $is_array;
@@ -26,18 +31,12 @@ class Collection implements \IteratorAggregate
      */
     public static function range($start, $end, $step = 1)
     {
-        return new static(self::xrange($start, $end, $step));
-    }
-
-    private static function xrange($start, $end, $step = 1)
-    {
-        $_i = $start;
-        while ($_i <= $end) {
-            yield $_i;
-            for ($j = $step; $j > 0; --$j) {
-                ++$_i;
-            }
-        }
+        $seed = [
+            '$_current = ' . var_export($start, 1),
+            '$_current != ' . var_export(++$end, 1),
+            implode(',', array_fill(0, $step, '++$_current')),
+        ];
+        return new static($seed, self::TYPE_FOR);
     }
 
     /**
@@ -50,26 +49,31 @@ class Collection implements \IteratorAggregate
         if (!is_int($count) || $count < 0) {
             throw new \InvalidArgumentException('$count must be int >= 0. given: ' . gettype($count));
         }
-        return new static(self::xrepeat($elem, $count));
-    }
-
-    private static function xrepeat($elem, $count)
-    {
-        while ($count--) {
-            yield $elem;
-        }
+        $seed = [
+            '$_current = $_elem, $_count = ' . var_export($count, 1),
+            '$_count > 0',
+            '--$_count'
+        ];
+        $collection = new static($seed, self::TYPE_FOR);
+        $collection->vars['_elem'] = $elem;
+        return $collection;
     }
 
     /**
      * @param iterable $seed
      */
-    public function __construct($seed)
+    public function __construct($seed, $type = null)
     {
         if (!is_array($seed) && !is_object($seed)) {
             throw new \InvalidArgumentException('$seed should be iterable, given ' . gettype($seed));
         }
-        $this->is_array = is_array($seed);
         $this->seed = $seed;
+        if ($type === self::TYPE_FOR) {
+            $this->type = $type;
+            $this->is_array = false;
+            return;
+        }
+        $this->is_array = is_array($seed);
     }
 
     /**
@@ -345,11 +349,41 @@ class Collection implements \IteratorAggregate
         return $_result;
     }
 
-    private static function compile($ops)
+    private function compile($ops)
     {
-        return '$_i = 0; foreach ($_seed as $_key => $_) {'
-            . '++$_i;'
-            . implode("\n", $ops)
-            . '}';
+        if ($this->type === self::TYPE_FOR) {
+            return $this->compileFor($ops, $this->seed);
+        }
+
+        return $this->compileForeach($ops);
+    }
+
+    private static function compileFor($ops, $seed)
+    {
+        array_unshift(
+            $ops,
+            '$_i = 0;',
+            'for (' . implode(';', $seed). ') {',
+            '    $_key = $_i;',
+            '    $_ = $_current;',
+            '    ++$_i;'
+        );
+
+        $ops[] = '}';
+
+        return implode("\n", $ops);
+    }
+
+    private static function compileForeach($ops)
+    {
+        array_unshift(
+            $ops,
+            '$_i = 0;',
+            'foreach ($_seed as $_key => $_) {',
+            '    ++$_i;'
+        );
+        $ops[] = '}';
+
+        return implode("\n", $ops);
     }
 }

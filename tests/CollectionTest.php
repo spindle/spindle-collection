@@ -113,12 +113,12 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
 
     public function testDump()
     {
-        $_ = Collection::range(1, 5);
+        $_ = Collection::from(Collection::range(1, 5));
 
         ob_start();
         $_->dump();
         $resp = ob_get_clean();
-        self::assertContains('"Generator"', $resp);
+        self::assertContains('"Spindle\Collection"', $resp);
 
         $_ = new Collection([]);
         ob_start();

@@ -21,6 +21,8 @@
     },
     "scripts": {
         "test": "phpunit --colors=always",
-        "fmt": "phpcbf --colors --standard=PSR2 src"
+        "dbg": "phpdbg -qrr vendor/bin/phpunit --colors=always",
+        "fmt": "phpcbf --colors --standard=PSR2 src",
+        "lint": "phpcs --colors --standard=PSR2 src"
     }
 }
