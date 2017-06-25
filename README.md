@@ -25,14 +25,14 @@ composer require 'spindle/collection'
 <?php
 require_once 'vendor/autoload.php';
 
-use Spindle\Collection as _;
+use Spindle\Collection\Collection as _;
 
-$collection = _::range(1, 100);
-// or $collection = _::from($some_iterable); 
-$collection
+_::range(1, 100)
     ->filter('$_ % 2')
     ->map('$_ * 2')
     ->assignTo($val);
+
+var_dump($val->toArray());
 ```
 
 ## Methods
@@ -54,6 +54,16 @@ _::range(1,4)->filter('$_ % 2')->dump();
 // 1,3
 ```
 
+### reject($fn)
+
+- `$fn($_) == true` ==> remove
+- `$fn($_) == false` ==> remain
+
+```php
+_::range(1,4)->reject('$_ % 2')->dump();
+// 2,4
+```
+
 ### unique()
 
 ```php
@@ -61,7 +71,7 @@ _::from([1,1,2,1])->unique()->dump();
 // 1
 ```
 
-### column(array $columns)
+### column(array|string $columns)
 
 Inspired by `array_column`.
 
@@ -70,6 +80,12 @@ $a = ['a' => 1, 'b' => 2, 'c' => 3];
 
 _::from([$a, $a])->column(['a', 'c'])->dump();
 // ['a' => 1, 'c' => 3], ['a' => 1, 'c' => 3];
+
+_::from([$a, $a])->column('a')->dump();
+// 1, 1;
+
+_::from([$a, $a])->column(['a'])->dump();
+// ['a' => 1], ['a' => 1]
 ```
 
 ### slice($offset, $length = null)

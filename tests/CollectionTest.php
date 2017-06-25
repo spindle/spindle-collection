@@ -1,5 +1,5 @@
 <?php
-namespace Spindle;
+namespace Spindle\Collection;
 
 class CollectionTest extends \PHPUnit\Framework\TestCase
 {
@@ -118,7 +118,7 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
         ob_start();
         $_->dump();
         $resp = ob_get_clean();
-        self::assertContains('"Spindle\Collection"', $resp);
+        self::assertContains('"Spindle\Collection\Collection"', $resp);
 
         $_ = new Collection([]);
         ob_start();
@@ -140,7 +140,7 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
         $_->map('$_ * 2')
           ->filter('$_ > 5');
         $expect = <<<_EXPECT_
-Spindle\Collection
+Spindle\Collection\Collection
  array-mode:0
  codes:
       \$_ = \$_ * 2;

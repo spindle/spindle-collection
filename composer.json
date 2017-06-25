@@ -10,7 +10,9 @@
         }
     ],
     "autoload": {
-        "files": ["src/Collection.php"]
+        "psr-4": {
+            "Spindle\\Collection\\": "src/"
+        }
     },
     "require": {
         "php": ">=5.6"

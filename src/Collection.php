@@ -1,8 +1,13 @@
 <?php
-namespace Spindle;
+namespace Spindle\Collection;
 
 class Collection implements \IteratorAggregate
 {
+    use Traits\SortTrait;
+    use Traits\SetsTrait;
+    use Traits\TerminateTrait;
+    use Traits\LimitTrait;
+
     const TYPE_FOR = 'for';
     const TYPE_FOREACH = 'foreach';
 
@@ -33,6 +38,9 @@ class Collection implements \IteratorAggregate
      */
     public static function range($start, $end, $step = 1, $debug = null)
     {
+        if (!is_int($step) || $step < 1) {
+            throw new \InvalidArgumentException('$step must be natural number: ' . $step);
+        }
         if (is_numeric($start) && is_numeric($end)) {
             $seed = [
                 '$_current = ' . $start,
@@ -100,40 +108,6 @@ class Collection implements \IteratorAggregate
     }
 
     /**
-     * @param string|callable $fn '$_ > 100'
-     * @return $this
-     */
-    public function filter($fn)
-    {
-        $this->is_array = false;
-        if (is_callable($fn)) {
-            $fn_name = '_fn' . $this->fn_cnt++;
-            $this->vars[$fn_name] = $fn;
-            $this->ops[] = '    if (!$' . $fn_name . '($_)) continue;';
-        } else {
-            $this->ops[] = '    if (!(' . $fn . ')) continue;';
-        }
-        return $this->step();
-    }
-
-    /**
-     * @param string|callable $fn '$_ > 100'
-     * @return $this
-     */
-    public function reject($fn)
-    {
-        $this->is_array = false;
-        if (is_callable($fn)) {
-            $fn_name = '_fn' . $this->fn_cnt++;
-            $this->vars[$fn_name] = $fn;
-            $this->ops[] = '    if ($' . $fn_name . '($_)) continue;';
-        } else {
-            $this->ops[] = '    if (' . $fn . ') continue;';
-        }
-        return $this->step();
-    }
-
-    /**
      * @param string|callable $fn '$_ * 2'
      * @return $this
      */
@@ -151,53 +125,24 @@ class Collection implements \IteratorAggregate
     }
 
     /**
-     * @param string[] column
+     * @param string|string[] columns
      * @return $this
      */
-    public function column(array $columns)
+    public function column($columns)
     {
         $this->is_array = false;
-        $defs = [];
-        foreach ($columns as $key) {
+        if (is_array($columns)) {
+            $defs = [];
+            foreach ($columns as $key) {
+                $exported = var_export($key, 1);
+                $defs[] = "$exported => \$_[$exported]";
+            }
+            $this->ops[] = '    $_ = [' . implode(',', $defs) . '];';
+        } else {
             $exported = var_export($key, 1);
-            $defs[] = "$exported => \$_[$exported]";
-        }
-        $this->ops[] = '    $_ = [' . implode(',', $defs) . '];';
-        return $this->step();
-    }
-
-    /**
-     * @param int $offset
-     * @param ?int $length
-     * @return $this
-     */
-    public function slice($offset, $length = null)
-    {
-        if ($offset < 0) {
-            return new $this(array_slice($this->toArray(), $offset, $length), $this->debug);
-        }
-        $this->ops[] = '    if ($_i < ' . $offset . ') continue;';
-        if ($length !== null) {
-            $this->ops[] = '    if ($_i >= ' . ($offset + $length) . ') break;';
+            $this->ops[] = "    \$_ = \$_[$key];";
         }
         return $this->step();
-    }
-
-    /**
-     * @param int $size
-     * @return $this
-     */
-    public function chunk($size)
-    {
-        return new $this(array_chunk($this->toArray(), $size), $this->debug);
-    }
-
-    /**
-     * @return \Spindle\Collection (new instance)
-     */
-    public function unique()
-    {
-        return new $this(array_unique($this->toArray()), $this->debug);
     }
 
     /**
@@ -206,89 +151,18 @@ class Collection implements \IteratorAggregate
     public function flip()
     {
         $this->is_array = false;
-        $this->ops[] = 'list($_key, $_) = array($_, $_key);';
+        $this->ops[] = '    list($_key, $_) = [$_, $_key];';
         return $this->step();
     }
 
     /**
-     * @param string|callable $fn '$_carry + $_'
-     * @param mixed $initial
-     * @return mixed
-     */
-    public function reduce($fn, $initial = null)
-    {
-        $ops = $this->ops;
-        $this->vars['_carry'] = $initial;
-        if (is_callable($fn)) {
-            $fn_name = '_fn' . $this->fn_cnt++;
-            $this->vars[$fn_name] = $fn;
-            $ops[] = '    $_carry = $' . $fn_name . '($_, $_carry);';
-        } else {
-            $ops[] = '    $_carry = ' . $fn . ';';
-        }
-        $after = '$_result = $_carry;';
-        return self::evaluate($this->seed, $this->vars, $this->compile($ops), '', $after);
-    }
-
-    /**
-     * @return int|float
-     */
-    public function sum()
-    {
-        $ops = $this->ops;
-        $before = '$_result = 0;';
-        $ops[] = '    $_result += $_;';
-
-        return self::evaluate($this->seed, $this->vars, $this->compile($ops), $before, '');
-    }
-
-    /**
-     * @return int|float
-     */
-    public function product()
-    {
-        $ops = $this->ops;
-        $before = '$_result = 1;';
-        $ops[] = '    $_result *= $_;';
-
-        return self::evaluate($this->seed, $this->vars, $this->compile($ops), $before, '');
-    }
-
-    /**
-     * @return \Spindle\Collection (new instance)
-     */
-    public function usort(callable $cmp)
-    {
-        $array = $this->toArray();
-        usort($array, $cmp);
-        return new $this($array, $this->debug);
-    }
-
-    /**
-     * @return \Spindle\Collection (new instance)
-     */
-    public function rsort($sort_flags = \SORT_REGULAR)
-    {
-        $array = $this->toArray();
-        rsort($array, $sort_flags);
-        return new $this($array, $this->debug);
-    }
-
-    /**
-     * @return \Spindle\Collection (new instance)
-     */
-    public function sort($sort_flags = \SORT_REGULAR)
-    {
-        $array = $this->toArray();
-        sort($array, $sort_flags);
-        return new $this($array, $this->debug);
-    }
-
-    /**
-     * @return \Generator
+     * @return \Generator|\ArrayIterator
      */
     public function getIterator()
     {
+        if ($this->is_array) {
+            return new \ArrayIterator($this->seed);
+        }
         $ops = $this->ops;
         $ops[] = 'yield $_key => $_;';
         $gen = self::evaluate(
