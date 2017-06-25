@@ -217,7 +217,7 @@ class Collection implements \IteratorAggregate
 
     private static function evaluate($_seed, $_vars, $_code, $_before, $_after)
     {
-        $_old_handler = set_error_handler(function($severity, $message, $file, $line){
+        set_error_handler(function($severity, $message, $file, $line){
             throw new \ErrorException($message, 0, $severity, $file, $line);
         }, E_ALL ^ E_DEPRECATED ^ E_USER_DEPRECATED);
         try {
@@ -227,7 +227,7 @@ class Collection implements \IteratorAggregate
         } catch (\ParseError $e) {
             throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
         } finally {
-            set_error_handler($_old_handler);
+            restore_error_handler();
         }
         return $_result;
     }
