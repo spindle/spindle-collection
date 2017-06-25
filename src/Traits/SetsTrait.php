@@ -44,7 +44,11 @@ trait SetsTrait
         $array = $this->toArray();
 
         if ($map) {
-            $mapped = (new $this($array))->groupBy($map)->toArray();
+            $keys = (new $this($array))->map($map)->toArray();
+            $mapped = [];
+            foreach ($keys as $key => $val) {
+                $mapped[$val][] = $key;
+            }
         } else {
             $mapped = [];
             foreach ($array as $key => $val) {

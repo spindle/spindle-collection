@@ -55,5 +55,4 @@ trait TerminateTrait
         $after = '$_result = $_carry;';
         return self::evaluate($this->seed, $this->vars, $this->compile($ops), '', $after);
     }
-
 }
